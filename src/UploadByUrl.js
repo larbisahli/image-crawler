@@ -56,7 +56,7 @@ async function UploadImage({ Year, Month, respond }) {
 }
 
 
-async function UploadImageByUrl(url, title) {
+export default async function UploadImageByUrl(url, title) {
     if (!url) return { success: false, message: 'url should not be empty' };
 
     const newDate = new Date();
@@ -157,23 +157,3 @@ async function UploadImageByUrl(url, title) {
         }
     })
 }
-
-const url = 'https://ae01.alicdn.com/kf/HTB13gJEKeGSBuNjSspbq6AiipXaM.jpg';
-
-const PrintResults = async () => {
-    const {
-        success,
-        error,
-        image,
-        placeholder
-    } = await UploadImageByUrl(url, 'product image from ali express');
-
-    console.log(`====>`, {
-        success,
-        error,
-        image,
-        placeholder
-    });
-};
-
-PrintResults();

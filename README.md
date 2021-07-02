@@ -1,10 +1,12 @@
 ## Usage with Next.js
 
-image-crawler will download an image using the URL or DataUrl and then uploads
+image-crawler will download an image using the URL or DataUrl and then upload
 the image and a 16px placeholder for Nextjs image component to s3 bucket.
 
 ```javascript
 // server.js
+
+import UploadImageByUrl from './src/UploadByUrl';
 
 const PrintResults = async () => {
   const url = 'https://ae01.alicdn.com/kf/HTB13gJEKeGSBuNjSspbq6AiipXaM.jpg';
