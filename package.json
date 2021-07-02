@@ -8,7 +8,7 @@
     "prebuild": "rimraf build",
     "start": "node ./build/script.js",
     "prestart": "yarn build",
-    "dev": "nodemon --exec babel-node ./src/script.js",
+    "dev": "nodemon --exec babel-node ./src/UploadByUrl.js",
     "prettier": "prettier --write \"**/*.{js,ts,json,yml}\""
   },
   "dependencies": {
