@@ -3,6 +3,8 @@
 image-crawler will download an image using the URL or DataUrl and then upload
 the image and a 16px placeholder for Nextjs image component to s3 bucket.
 
+Download and upload image using a url:
+
 ```javascript
 // server.js
 
@@ -34,7 +36,7 @@ PrintResults();
 //   }
 ```
 
-How to use the placeholder in Nextjs Image component
+Using the placeholder in Nextjs Image component:
 
 ```javascript
 // component.js
@@ -48,10 +50,13 @@ const component = () => {
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mM8eftXPQAIMgMfS5tX7gAAAABJRU5ErkJggg=='
   );
 
+  const placeholderUrl =
+    'https://bucket-name.fra1.digitaloceanspaces.com/2021/7/product_image_from_ali_express_1625219873_Dpse5Mot9_placeholder.jpg';
+
   useEffect(() => {
     // Convert an Image to DataUrl
     async function fetchData() {
-      const data = await fetch(url);
+      const data = await fetch(placeholderUrl);
       const blob = await data.blob();
       // eslint-disable-next-line no-undef
       return await new Promise((resolve) => {
@@ -66,8 +71,8 @@ const component = () => {
       });
     }
 
-    if (url) fetchData();
-  }, [url]);
+    if (placeholderUrl) fetchData();
+  }, [placeholderUrl]);
 
   return (
     <Image
