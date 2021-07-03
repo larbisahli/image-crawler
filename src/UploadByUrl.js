@@ -7,10 +7,12 @@ import sharp from 'sharp';
 
 require('dotenv').config();
 
-// import sharp from 'sharp'
 shortid.characters(
     '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$£'
 );
+
+// RegEx to validate Base64 data url
+const Base64Regex = /^data:image\/(?:gif|png|jpeg|bmp|webp|svg\+xml)(?:;charset=utf-8)?;base64,(?:[A-Za-z0-9]|[+/])+={0,2}/;
 
 // Set S3 endpoint to DigitalOcean Spaces
 const spacesEndpoint = new AWS.Endpoint(process.env.SPACES_BUCKET_ENDPOINT);
@@ -23,7 +25,7 @@ const s3 = new AWS.S3({
 
 if (!fs.existsSync('temp')) fs.mkdirSync('temp');
 
-const DeleteTempFileImages = async (TemporaryImages) => {
+const DeleteTemporaryImages = async (TemporaryImages) => {
     try {
         for await (const file of TemporaryImages) {
             fs.unlink(path.join('', file), (err) => {
@@ -31,23 +33,22 @@ const DeleteTempFileImages = async (TemporaryImages) => {
             });
         }
     } catch (error) {
-        console.error(`Error:<DeleteTempFileImages> `, { error })
+        console.error(`Error:<DeleteTemporaryImages> `, { error })
     }
 };
-
 
 async function UploadImage({ Year, Month, respond }) {
     const params = [
         {
             Bucket: process.env.SPACES_BUCKET_NAME,
-            Key: `${Year}/${Month}/${respond.image.name}`,
-            Body: fs.createReadStream(respond.image.path),
+            Key: `${Year}/${Month}/${respond?.image.name}`,
+            Body: fs.createReadStream(respond?.image.path),
             ACL: 'public-read',
         },
         {
             Bucket: process.env.SPACES_BUCKET_NAME,
-            Key: `${Year}/${Month}/${respond.placeholder.name}`,
-            Body: fs.createReadStream(respond.placeholder.path),
+            Key: `${Year}/${Month}/${respond?.placeholder.name}`,
+            Body: fs.createReadStream(respond?.placeholder.path),
             ACL: 'public-read',
         }
     ]
@@ -55,40 +56,40 @@ async function UploadImage({ Year, Month, respond }) {
     return await Promise.all(params.map(param => s3.putObject(param).promise()))
 }
 
-
 export default async function UploadImageByUrl(url, title) {
     if (!url) return { success: false, message: 'url should not be empty' };
 
     const newDate = new Date();
+
+    const DateAsInt = Math.round(newDate.getTime() / 1000); // in seconds
     const Month = parseInt(newDate.getMonth() + 1);
     const Year = newDate.getFullYear();
-    const DateAsInt = Math.round(newDate.getTime() / 1000); // in seconds
+
     const imageName = `${title.split(' ').join('_')}_${DateAsInt}_${shortid.generate()}`;
-    const filePath = path.join('temp', `${imageName}.jpg`)
+    const imagePath = path.join('temp', `${imageName}.jpg`)
 
     return new Promise((resolve, reject) => {
 
         // base64
-        if (!/^https/.test(url) || !/^http/.test(url)) {
+        if (Base64Regex.test(url)) {
             var base64Data = url.replace(/^data:image\/png;base64,/, '');
-            fs.writeFile(filePath, base64Data, 'base64', async function (error) {
+            fs.writeFile(imagePath, base64Data, 'base64', async function (error) {
                 if (error) {
-                    return reject({ success: false, error });
+                    return reject({ error });
                 }
 
-                sharp(filePath)
+                sharp(imagePath)
                     .resize(16)
                     .toFile(path.join('temp', `${imageName}_placeholder.jpg`), async (error, info) => {
                         if (error) {
                             console.error(`Error:<sharp>`, { error, info });
-                            return reject({ success: false, error });
+                            return reject({ error });
                         }
 
                         return resolve({
-                            success: true,
                             image: {
                                 name: `${imageName}.jpg`,
-                                path: filePath
+                                path: imagePath
                             },
                             placeholder: {
                                 name: `${imageName}_placeholder.jpg`,
@@ -105,22 +106,21 @@ export default async function UploadImageByUrl(url, title) {
             }).then(
                 (res) =>
                     res.data
-                        .pipe(fs.createWriteStream(filePath))
+                        .pipe(fs.createWriteStream(imagePath))
                         .on('finish', async () => {
-                            sharp(filePath)
+                            sharp(imagePath)
                                 .resize(16)
                                 .toFile(path.join('temp', `${imageName}_placeholder.jpg`), async (error, info) => {
                                     if (error) {
                                         console.error(`Error:<sharp>`, { error, info });
-                                        return reject({ success: false, error });
+                                        return reject({ error });
                                     }
 
                                     return resolve(
                                         {
-                                            success: true,
                                             image: {
                                                 name: `${imageName}.jpg`,
-                                                path: filePath
+                                                path: imagePath
                                             },
                                             placeholder: {
                                                 name: `${imageName}_placeholder.jpg`,
@@ -131,7 +131,7 @@ export default async function UploadImageByUrl(url, title) {
                                 });
                         })
                         .on('error', (error) =>
-                            reject({ success: false, error })
+                            reject({ error })
                         )
                         .on('close', () => void 0))
         }
@@ -149,11 +149,17 @@ export default async function UploadImageByUrl(url, title) {
         const { image, placeholder } = respond
         const arr = [image.path, placeholder.path]
 
-        DeleteTempFileImages(arr)
+        DeleteTemporaryImages(arr)
 
         return {
-            image: { path: image.path, ETag: image.ETag },
-            placeholder: { path: placeholder.path, ETag: placeholder.ETag }
+            image: {
+                path: `/${Year}/${Month}/${image.name}`,
+                ETag: image.ETag
+            },
+            placeholder: {
+                path: `/${Year}/${Month}/${placeholder.name}`,
+                ETag: placeholder.ETag
+            }
         }
     })
 }

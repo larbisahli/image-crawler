@@ -1,7 +1,7 @@
 ## Usage with Next.js
 
-image-crawler will download an image using the URL or DataUrl and then upload
-the image and a 16px placeholder for Nextjs image component to s3 bucket.
+image-crawler will download an image using the URL or Data URL and upload it to
+a s3 bucket with a 16px placeholder version for the Nextjs image component.
 
 Download and upload image using a url:
 
@@ -14,7 +14,7 @@ const PrintResults = async () => {
   const url = 'https://ae01.alicdn.com/kf/HTB13gJEKeGSBuNjSspbq6AiipXaM.jpg';
   const title = 'product image from ali express';
 
-  const { success, error, image, placeholder } = await UploadImageByUrl(
+  const { image, placeholder, error } = await UploadImageByUrl(
     url,
     title
   );
@@ -23,17 +23,17 @@ const PrintResults = async () => {
 PrintResults();
 
 // Results:
-//   {
-//     success: undefined,
-//     error: undefined,
-//     image: {
-//       path: 'temp\\product_image_from_ali_express_1625214253_McTefiJPA.jpg',
-//       ETag: '"fa8bc66b3d45370d5997856fb07cef07"'
-//     },
-//     placeholder: {
-//       path: 'temp\\product_image_from_ali_express_1625214253_McTefiJPA_placeholder.jpg',
-//       ETag: '"22436eaa7cd6c1b0ee25ec171265dcbc"'
-//   }
+{
+  image: {
+    path: '/2021/7/product_image_from_ali_express_1625320790_utZlhTnHo.jpg',
+    ETag: '"fa8bc66b3d45370d5997856fb07cef07"'
+  },
+  placeholder: {
+    path: '/2021/7/product_image_from_ali_express_1625320790_utZlhTnHo_placeholder.jpg',
+    ETag: '"22436eaa7cd6c1b0ee25ec171265dcbc"'
+  },
+  error: undefined
+}
 ```
 
 Using the placeholder in Nextjs Image component:
@@ -51,14 +51,14 @@ const component = () => {
   );
 
   const placeholderUrl =
-    'https://bucket-name.fra1.digitaloceanspaces.com/2021/7/product_image_from_ali_express_1625219873_Dpse5Mot9_placeholder.jpg';
+    'https://bucket-name.fra1.digitaloceanspaces.com/2021/7/product_image_from_ali_express_1625320790_utZlhTnHo_placeholder.jpg';
 
   useEffect(() => {
     // Convert an Image to DataUrl
-    async function fetchData() {
+    async function toBase64() {
       const data = await fetch(placeholderUrl);
       const blob = await data.blob();
-      // eslint-disable-next-line no-undef
+
       return await new Promise((resolve) => {
         const reader = new window.FileReader();
         reader.readAsDataURL(blob);
@@ -71,7 +71,7 @@ const component = () => {
       });
     }
 
-    if (placeholderUrl) fetchData();
+    if (placeholderUrl) toBase64();
   }, [placeholderUrl]);
 
   return (
@@ -81,10 +81,10 @@ const component = () => {
       height={250}
       blurDataURL={Base64Placeholder}
       placeholder="blur"
-      alt=""
+      alt="my product image"
       className="bg-blue-100 rounded-t"
-      unoptimized={true} // use this untill next.js V11.0.2 is released
-      src="https://bucket-name.fra1.digitaloceanspaces.com/2021/7/product_image_from_ali_express_1625219873_Dpse5Mot9.jpg"
+      unoptimized={true} // Use unoptimized=true untill next.js V11.0.2 is released for the : Fix image content type octet stream 400
+      src="https://bucket-name.fra1.digitaloceanspaces.com/2021/7/product_image_from_ali_express_1625320790_utZlhTnHo.jpg"
     />
   );
 };
