@@ -3,7 +3,7 @@
 image-crawler will download an image using the URL or Data URL and upload it to
 a s3 bucket with a 16px placeholder version for the Nextjs image component.
 
-Download and upload image using a url:
+Download and upload an image using the url:
 
 ```javascript
 // server.js
