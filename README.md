@@ -8,7 +8,7 @@ Download and upload an image using the url:
 ```javascript
 // server.js
 
-import UploadImageByUrl from './src/UploadByUrl';
+import UploadImageByUrl from './src/upload';
 
 const PrintResults = async () => {
   const url = 'https://ae01.alicdn.com/kf/HTB13gJEKeGSBuNjSspbq6AiipXaM.jpg';
