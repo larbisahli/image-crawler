@@ -8,11 +8,13 @@
     "prebuild": "rimraf build",
     "start": "node ./build/script.js",
     "prestart": "yarn build",
-    "dev": "nodemon --exec babel-node ./src/script.js",
+    "dev": "nodemon --exec babel-node ./src/UploadByUrl.js",
     "prettier": "prettier --write \"**/*.{js,ts,json,yml}\""
   },
   "dependencies": {
+    "aws-sdk": "^2.938.0",
     "axios": "^0.21.1",
+    "dotenv": "^10.0.0",
     "sharp": "^0.28.3",
     "shortid": "^2.2.16"
   },
