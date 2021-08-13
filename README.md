@@ -1,9 +1,10 @@
 ## Usage with Next.js
 
-image-crawler will download an image using the URL or Data URL and upload it to
-a s3 bucket with a 16px placeholder version for the Nextjs image component.
+image-crawler will download an image using a URL or Data URL and upload it to a
+s3 bucket with a 16px placeholder version of the original image for the Nextjs
+image component placeholder.
 
-Download and upload an image using the url:
+Download and upload an image using a url:
 
 ```javascript
 // server.js
@@ -22,7 +23,7 @@ const PrintResults = async () => {
 
 PrintResults();
 
-// Results:
+// Print Results:
 {
   image: {
     path: '/2021/7/product_image_from_ali_express_1625320790_utZlhTnHo.jpg',
@@ -54,7 +55,7 @@ const component = () => {
     'https://bucket-name.fra1.digitaloceanspaces.com/2021/7/product_image_from_ali_express_1625320790_utZlhTnHo_placeholder.jpg';
 
   useEffect(() => {
-    // Convert an Image to DataUrl
+    // Convert an Image URL to DataUrl (base64)
     async function toBase64() {
       const data = await fetch(placeholderUrl);
       const blob = await data.blob();
@@ -83,7 +84,7 @@ const component = () => {
       placeholder="blur"
       alt="my product image"
       className="bg-blue-100 rounded-t"
-      unoptimized={true} // Use unoptimized=true untill next.js V11.0.2 is released for the : Fix image content type octet stream 400
+      unoptimized={true} // Use unoptimized=true or upgrade Next.js to V11.1.0 for the fix of image content type octet-stream 400
       src="https://bucket-name.fra1.digitaloceanspaces.com/2021/7/product_image_from_ali_express_1625320790_utZlhTnHo.jpg"
     />
   );
