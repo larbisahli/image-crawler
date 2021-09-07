@@ -1,9 +1,5 @@
 module.exports = {
-  collectCoverageFrom: [
-    '**/*.{js,jsx,ts,tsx}',
-    '!**/*.d.ts',
-    '!**/node_modules/**',
-  ],
+  collectCoverageFrom: ['**/*.{ts}', '!**/*.d.ts', '!**/node_modules/**'],
   verbose: true,
   // setupFilesAfterEnv: ['<rootDir>/setupTest.js'],
   testPathIgnorePatterns: ['/node_modules/', '__tests__/mock/', '/build/'],

@@ -1,7 +1,7 @@
 ## Usage with Next.js
 
 image-crawler will download an image using a URL or Data URL and upload it to a
-s3 bucket with a 16px placeholder version of the original image for the Nextjs
+s3 bucket with a 20px placeholder version of the original image for the Nextjs
 image component placeholder.
 
 Download and upload an image using a url:
@@ -35,60 +35,101 @@ PrintResults();
   },
   error: undefined
 }
+
+// UploadImageByUrl type
+function UploadImageByUrl(
+  url: string,
+  title: string
+): Promise<
+  | {
+      image: {
+        path: string;
+        ETag: string;
+      };
+      placeholder: {
+        path: string;
+        ETag: string;
+      };
+    }
+  | {
+      error: Error;
+    }
+>
 ```
 
 Using the placeholder in Nextjs Image component:
 
-```javascript
-// component.js
+```typescript
+// ImageComponent.ts
+import Image, { ImageProps } from 'next/image';
+import React, { memo, useEffect, useState } from 'react';
 
-import React from 'react';
-import Image from 'next/image';
+import { Logs } from '@/lib/index';
 
-const component = () => {
+interface Props extends ImageProps {
+  src: string;
+}
+
+const ImageComponent = (props: Props) => {
   // Show something while the placeholder is loading
-  const [Base64Placeholder, setBase64Placeholder] = useState(
-    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mM8eftXPQAIMgMfS5tX7gAAAABJRU5ErkJggg=='
-  );
+  const [Base64Placeholder, setBase64Placeholder] =
+    useState <
+    string >
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8+utrPQAJNQNlcqdyCgAAAABJRU5ErkJggg==';
 
-  const placeholderUrl =
-    'https://bucket-name.fra1.digitaloceanspaces.com/2021/7/product_image_from_ali_express_1625320790_utZlhTnHo_placeholder.jpg';
+  // src = '/2021/7/product_image_from_ali_express_1625320790_utZlhTnHo.jpg'
 
   useEffect(() => {
-    // Convert an Image URL to DataUrl (base64)
     async function toBase64() {
-      const data = await fetch(placeholderUrl);
-      const blob = await data.blob();
+      const arr: string[] = props.src?.split('.');
+      const IS_PROD = process.env.NODE_ENV === 'production';
+      const URI = IS_PROD ? process.env.MEDIA_URL : process.env.MEDIA_URL_DEV;
+      // URI = https://bucket-name.fra1.digitaloceanspaces.com
+      const URL = arr ? `${URI}${arr[0]}_placeholder.${arr[1]}` : '';
 
-      return await new Promise((resolve) => {
-        const reader = new window.FileReader();
-        reader.readAsDataURL(blob);
-        reader.onloadend = () => {
-          const base64data = reader.result;
-          return resolve(base64data);
-        };
-      }).then((res) => {
-        setBase64Placeholder(res);
-      });
+      try {
+        const data = await fetch(URL);
+        const blob = await data.blob();
+        return await new Promise((resolve) => {
+          const reader = new window.FileReader();
+          reader.readAsDataURL(blob);
+          reader.onloadend = () => {
+            const base64data = reader.result;
+            return resolve(base64data);
+          };
+        })
+          .then((res: string) => {
+            setBase64Placeholder(res);
+            return res;
+          })
+          .catch((error) => {
+            // log to sentry
+            Logs({ message: 'ImageComponent /u', error });
+          });
+      } catch (error) {
+        // log to sentry
+        Logs({ message: 'ImageComponent /d', error });
+      }
     }
 
-    if (placeholderUrl) toBase64();
-  }, [placeholderUrl]);
+    if (props.src) toBase64();
+  }, [props.src]);
 
   return (
     <Image
-      quality={95}
-      width={250}
-      height={250}
+      {...props}
       blurDataURL={Base64Placeholder}
       placeholder="blur"
-      alt="my product image"
-      className="bg-blue-100 rounded-t"
-      unoptimized={true} // Use unoptimized=true or upgrade Next.js to V11.1.0 for the fix of image content type octet-stream 400
-      src="https://bucket-name.fra1.digitaloceanspaces.com/2021/7/product_image_from_ali_express_1625320790_utZlhTnHo.jpg"
+      alt={props.alt ?? 'product-image'}
+      className="object-cover"
+      src={`${process.env.MEDIA_URL}${
+        props.src ?? '/static/images/no-image-placeholder.svg'
+      }`}
     />
   );
 };
+
+export default memo(ImageComponent);
 ```
 
 First, install all dependencies for the project:
