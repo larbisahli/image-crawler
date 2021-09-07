@@ -1,8 +1,6 @@
 ## Usage with Next.js
 
-image-crawler will download an image using a URL or Data URL and upload it to a
-s3 bucket with a 20px placeholder version of the original image for the Nextjs
-image component placeholder.
+image-crawler will download an image using a URL or Data URL and upload it to an s3 bucket with a 20px placeholder version of the original image, and then we will convert the 20px image to a base64 for the Nextjs image component placeholder.
 
 Download and upload an image using a url:
 
