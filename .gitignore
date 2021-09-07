@@ -4,6 +4,7 @@
 # production
 /build/
 .env
+dist
 
 # debug
 npm-debug.log*
