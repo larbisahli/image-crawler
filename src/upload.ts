@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 import fs from 'fs';
 import axios from 'axios';
 import path from 'path';
@@ -7,16 +8,17 @@ import sharp from 'sharp';
 import dotenv from 'dotenv';
 
 interface ImgRespond {
-  image: {
-    name: string;
+  image?: {
+    name?: string;
     path: string;
     ETag?: string;
   };
-  placeholder: {
-    name: string;
+  placeholder?: {
+    name?: string;
     path: string;
     ETag?: string;
   };
+  error?: Error
 }
 
 interface UploadImageType {
@@ -24,21 +26,6 @@ interface UploadImageType {
   Month: number;
   respond: ImgRespond;
 }
-
-type UploadImageByUrlType =
-  | {
-      image: {
-        path: string;
-        ETag: string;
-      };
-      placeholder: {
-        path: string;
-        ETag: string;
-      };
-    }
-  | {
-      error: Error;
-    };
 
 dotenv.config();
 
@@ -106,7 +93,7 @@ async function UploadImage({ Year, Month, respond }: UploadImageType) {
 export default async function UploadImageByUrl(
   url: string,
   title: string
-): Promise<UploadImageByUrlType> {
+): Promise<ImgRespond> {
   const newDate = new Date();
 
   const DateAsInt = Math.round(newDate.getTime() / 1000); // in seconds
