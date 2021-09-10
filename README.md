@@ -17,6 +17,8 @@ const PrintResults = async () => {
     url,
     title
   );
+
+  return { image, placeholder, error } 
 };
 
 PrintResults();
@@ -33,26 +35,6 @@ PrintResults();
   },
   error: undefined
 }
-
-// UploadImageByUrl type
-function UploadImageByUrl(
-  url: string,
-  title: string
-): Promise<
-  | {
-      image: {
-        path: string;
-        ETag: string;
-      };
-      placeholder: {
-        path: string;
-        ETag: string;
-      };
-    }
-  | {
-      error: Error;
-    }
->
 ```
 
 Using the placeholder in Nextjs Image component:

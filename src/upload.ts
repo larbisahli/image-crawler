@@ -6,6 +6,40 @@ import AWS from 'aws-sdk';
 import sharp from 'sharp';
 import dotenv from 'dotenv';
 
+interface ImgRespond {
+  image: {
+    name: string;
+    path: string;
+    ETag?: string;
+  };
+  placeholder: {
+    name: string;
+    path: string;
+    ETag?: string;
+  };
+}
+
+interface UploadImageType {
+  Year: number;
+  Month: number;
+  respond: ImgRespond;
+}
+
+type UploadImageByUrlType =
+  | {
+      image: {
+        path: string;
+        ETag: string;
+      };
+      placeholder: {
+        path: string;
+        ETag: string;
+      };
+    }
+  | {
+      error: Error;
+    };
+
 dotenv.config();
 
 if (!fs.existsSync('temp')) fs.mkdirSync('temp');
@@ -15,9 +49,9 @@ shortid.characters(
 );
 
 // RegEx
-const IsBase64Regex: RegExp =
+const IsBase64Regex =
   /^data:image\/(?:gif|png|jpeg|jpg|bmp|webp|svg\+xml)(?:;charset=utf-8)?;base64,(?:[A-Za-z0-9]|[+/])+={0,2}/;
-const GetBase64Mime: RegExp = /data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/;
+const GetBase64Mime = /data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/;
 
 // Set S3 endpoint to DigitalOcean Spaces
 const spacesEndpoint = new AWS.Endpoint(process.env.SPACES_BUCKET_ENDPOINT);
@@ -48,25 +82,6 @@ const DeleteTemporaryImages = async (TemporaryImages: string[]) => {
   }
 };
 
-interface ImgRespond {
-  image: {
-    name: string;
-    path: string;
-    ETag?: string;
-  };
-  placeholder: {
-    name: string;
-    path: string;
-    ETag?: string;
-  };
-}
-
-interface UploadImageType {
-  Year: number;
-  Month: number;
-  respond: ImgRespond;
-}
-
 async function UploadImage({ Year, Month, respond }: UploadImageType) {
   const params = [
     {
@@ -88,14 +103,23 @@ async function UploadImage({ Year, Month, respond }: UploadImageType) {
   );
 }
 
-export default async function UploadImageByUrl(url: string, title: string) {
+export default async function UploadImageByUrl(
+  url: string,
+  title: string
+): Promise<UploadImageByUrlType> {
   const newDate = new Date();
+
   const DateAsInt = Math.round(newDate.getTime() / 1000); // in seconds
   const Month = newDate.getMonth() + 1;
   const Year = newDate.getFullYear();
-  const imageName = `${title
-    .split(' ')
-    .join('_')}_${DateAsInt}_${shortid.generate()}`;
+
+  const CleanTitle = title
+    .replace(/\./g, '')
+    .replace(/\,/g, '')
+    .replace(/\-/g, '');
+  const imageName = `${CleanTitle.split(' ').join(
+    '_'
+  )}_${DateAsInt}_${shortid.generate()}`;
 
   return new Promise<ImgRespond>((resolve, reject) => {
     if (!url || !title)
@@ -104,10 +128,10 @@ export default async function UploadImageByUrl(url: string, title: string) {
     // base64
     if (IsBase64Regex.test(url)) {
       const base64Data = url.split(',')[1];
-      let FileExtension = base64MimeType(url)?.split('/')[1];
-      let Image = `${imageName}.${FileExtension}`;
-      let Placeholder = `${imageName}_placeholder.${FileExtension}`;
-      let Base64ImagePath = path.join('temp', Image);
+      const FileExtension = base64MimeType(url)?.split('/')[1];
+      const Image = `${imageName}.${FileExtension}`;
+      const Placeholder = `${imageName}_placeholder.${FileExtension}`;
+      const Base64ImagePath = path.join('temp', Image);
 
       if (!FileExtension) {
         return reject({ error: 'There was no file extension specified' });
@@ -124,7 +148,7 @@ export default async function UploadImageByUrl(url: string, title: string) {
 
           sharp(Base64ImagePath)
             .resize(16)
-            .toFile(path.join('temp', Placeholder), async (error) => {
+            .toFile(path.join('temp', Placeholder), async (error: Error) => {
               if (error) {
                 console.error(`Error:<sharp>`, { error });
                 return reject({ error });
@@ -149,10 +173,10 @@ export default async function UploadImageByUrl(url: string, title: string) {
         url,
         responseType: 'stream',
       }).then((res) => {
-        let FileExtension = res.headers['content-type'].split('/')[1];
-        let Image = `${imageName}.${FileExtension}`;
-        let Placeholder = `${imageName}_placeholder.${FileExtension}`;
-        let imagePath = path.join('temp', Image);
+        const FileExtension = res.headers['content-type'].split('/')[1];
+        const Image = `${imageName}.${FileExtension}`;
+        const Placeholder = `${imageName}_placeholder.${FileExtension}`;
+        const imagePath = path.join('temp', Image);
 
         if (!FileExtension) {
           return reject({ error: 'There was no file extension specified' });
@@ -163,7 +187,7 @@ export default async function UploadImageByUrl(url: string, title: string) {
           .on('finish', async () => {
             sharp(imagePath)
               .resize(20)
-              .toFile(path.join('temp', Placeholder), async (error) => {
+              .toFile(path.join('temp', Placeholder), async (error: Error) => {
                 if (error) {
                   console.error(`Error:<sharp>`, { error });
                   return reject({ error });
@@ -208,7 +232,7 @@ export default async function UploadImageByUrl(url: string, title: string) {
         },
       };
     })
-    .catch((error:Error) => {
+    .catch((error: Error) => {
       return { error };
     });
 }
